@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: user-service
+
   datasource:
     url: jdbc:postgresql://localhost:5432/userdb
     username: postgres
@@ -13,6 +16,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: true
         format_sql: true
+    show-sql: true
 
   sql:
     init:
@@ -21,6 +25,29 @@ spring:
 server:
   port: 8080
 
+# OpenAPI/Swagger Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    filter: true
+  show-actuator: true
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+# Custom OpenAPI Configuration
+app:
+  openapi:
+    dev-url: http://localhost:8080
+    prod-url: https://api.example.com
+
 logging:
   level:
-    com.example: DEBUG
+    com.example: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.hateoas: DEBUG

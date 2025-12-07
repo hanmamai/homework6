@@ -1,13 +1,25 @@
 package com.example.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.hateoas.RepresentationModel;
 import java.time.LocalDateTime;
 
-public class UserResponse {
+@Schema(description = "Response object containing user data")
+public class UserResponse extends RepresentationModel<UserResponse>{
 
+    @Schema(description = "Unique identifier of the user", example = "1")
     private Long id;
+
+    @Schema(description = "User's full name", example = "John Doe")
     private String name;
+
+    @Schema(description = "User's email address", example = "john.doe@example.com")
     private String email;
+
+    @Schema(description = "User's age", example = "30")
     private Integer age;
+
+    @Schema(description = "Timestamp when user was created", example = "2023-11-15T10:30:00")
     private LocalDateTime createdAt;
 
 
