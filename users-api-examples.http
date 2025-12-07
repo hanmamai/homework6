@@ -1,0 +1,42 @@
+### Get API Documentation
+GET http://localhost:8080/api
+Accept: application/hal+json
+
+### Get Swagger UI
+GET http://localhost:8080/swagger-ui.html
+
+### Get OpenAPI Specification
+GET http://localhost:8080/v3/api-docs
+
+### Create a new user
+POST http://localhost:8080/api/users
+Content-Type: application/json
+Accept: application/hal+json
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "age": 30
+}
+
+### Get all users
+GET http://localhost:8080/api/users
+Accept: application/hal+json
+
+### Get user by ID (replace {id} with actual ID)
+GET http://localhost:8080/api/users/1
+Accept: application/hal+json
+
+### Update user (replace {id} with actual ID)
+PUT http://localhost:8080/api/users/1
+Content-Type: application/json
+Accept: application/hal+json
+
+{
+  "name": "John Updated",
+  "email": "john.updated@example.com",
+  "age": 35
+}
+
+### Delete user (replace {id} with actual ID)
+DELETE http://localhost:8080/api/users/1

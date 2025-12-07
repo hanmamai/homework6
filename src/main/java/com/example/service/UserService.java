@@ -1,15 +1,22 @@
 package com.example.service;
 
+import com.example.controller.UserController;
 import com.example.dto.UserRequest;
 import com.example.dto.UserResponse;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Service
 @Transactional
@@ -22,7 +29,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public UserResponse createUser(UserRequest userRequest) {
+    public EntityModel<UserResponse> createUser(UserRequest userRequest) {
         // Проверка уникальности email
         if (userRepository.existsByEmail(userRequest.getEmail())) {
             throw new IllegalArgumentException("User with email " + userRequest.getEmail() + " already exists");
@@ -31,26 +38,46 @@ public class UserService {
         User user = new User(userRequest.getName(), userRequest.getEmail(), userRequest.getAge());
         User savedUser = userRepository.save(user);
 
-        return convertToResponse(savedUser);
+        UserResponse response = convertToResponse(savedUser);
+        return EntityModel.of(response,
+                WebMvcLinkBuilder.linkTo(methodOn(UserController.class).getUserById(savedUser.getId())).withSelfRel(),
+                linkTo(methodOn(UserController.class).getAllUsers()).withRel("all-users")
+        );
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll()
+    public CollectionModel<EntityModel<UserResponse>> getAllUsers() {
+        List<EntityModel<UserResponse>> users = userRepository.findAll()
                 .stream()
                 .map(this::convertToResponse)
+                .map(response -> EntityModel.of(response,
+                        linkTo(methodOn(UserController.class).getUserById(response.getId())).withSelfRel(),
+                        linkTo(methodOn(UserController.class).updateUser(response.getId(), null)).withRel("update"),
+                        linkTo(methodOn(UserController.class).deleteUser(response.getId())).withRel("delete")
+                ))
                 .collect(Collectors.toList());
+
+        return CollectionModel.of(users,
+                linkTo(methodOn(UserController.class).getAllUsers()).withSelfRel(),
+                linkTo(methodOn(UserController.class).createUser(null)).withRel("create-user")
+        );
     }
 
     @Transactional(readOnly = true)
-    public UserResponse getUserById(Long id) {
+    public EntityModel<UserResponse> getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
-        return convertToResponse(user);
+        UserResponse response = convertToResponse(user);
+        return EntityModel.of(response,
+                linkTo(methodOn(UserController.class).getUserById(id)).withSelfRel(),
+                linkTo(methodOn(UserController.class).getAllUsers()).withRel("all-users"),
+                linkTo(methodOn(UserController.class).updateUser(id, null)).withRel("update"),
+                linkTo(methodOn(UserController.class).deleteUser(id)).withRel("delete")
+        );
     }
 
-    public UserResponse updateUser(Long id, UserRequest userRequest) {
+    public EntityModel<UserResponse> updateUser(Long id, UserRequest userRequest) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
@@ -65,7 +92,14 @@ public class UserService {
         user.setAge(userRequest.getAge());
 
         User updatedUser = userRepository.save(user);
-        return convertToResponse(updatedUser);
+        UserResponse response = convertToResponse(updatedUser);
+
+        return EntityModel.of(response,
+                linkTo(methodOn(UserController.class).getUserById(id)).withSelfRel(),
+                linkTo(methodOn(UserController.class).getAllUsers()).withRel("all-users"),
+                linkTo(methodOn(UserController.class).updateUser(id, null)).withRel("update"),
+                linkTo(methodOn(UserController.class).deleteUser(id)).withRel("delete")
+        );
     }
 
     public void deleteUser(Long id) {
@@ -77,12 +111,12 @@ public class UserService {
     }
 
     private UserResponse convertToResponse(User user) {
-        return new UserResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getAge(),
-                user.getCreatedAt()
-        );
+        UserResponse response = new UserResponse();
+        response.setId(user.getId());
+        response.setName(user.getName());
+        response.setEmail(user.getEmail());
+        response.setAge(user.getAge());
+        response.setCreatedAt(user.getCreatedAt());
+        return response;
     }
 }
